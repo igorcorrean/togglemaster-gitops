@@ -4,7 +4,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - auth-service
-  - flag-service
-  - targeting-service
-  - evaluation-service
-  - analytics-service
+  # - flag-service
+  # - targeting-service
+  # - evaluation-service
+  # - analytics-service
