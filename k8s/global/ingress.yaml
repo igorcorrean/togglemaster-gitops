@@ -1,0 +1,49 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: togglemaster-ingress
+  namespace: togglemaster
+  annotations:    
+    # Boas práticas para o Nginx Ingress Controller tratar os caminhos corretamente
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx # Padrão moderno do K8s
+  rules:
+  - http:
+      paths:
+      # 1. Roteamento para o auth-service (Go)
+      - path: /auth(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: auth-service
+            port:
+              number: 8001
+
+      # 2. Roteamento para o flag-service (Python)
+      - path: /flags(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: flag-service
+            port:
+              number: 8002
+
+      # 3. Roteamento para o targeting-service (Python)
+      - path: /targeting(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: targeting-service
+            port:
+              number: 8003
+
+      # 4. Roteamento para o evaluation-service (Go)
+      - path: /evaluation(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: evaluation-service
+            port:
+              number: 8004
