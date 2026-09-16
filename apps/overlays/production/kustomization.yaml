@@ -4,6 +4,9 @@ metadata:
   name: togglemaster
   namespace: flux-system
 
+resources:
+  - ../../base
+  
 # Injeta ConfigMap dinamicamente com os endpoints da AWS gerados pelo Terraform
 configMapGenerator:
   - name: togglemaster-config
