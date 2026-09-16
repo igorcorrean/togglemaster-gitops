@@ -6,8 +6,6 @@ metadata:
 
 resources:
   - ../../base
-  - secretstore.yaml
-  - externalsecret.yaml
   
 # Injeta ConfigMap dinamicamente com os endpoints da AWS gerados pelo Terraform
 configMapGenerator:
