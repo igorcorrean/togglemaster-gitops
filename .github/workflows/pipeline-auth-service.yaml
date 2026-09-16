@@ -55,9 +55,8 @@ jobs:
           # -f indica onde está o Dockerfile
           # O último argumento indica a pasta de contexto (onde estão go.mod, main.go, etc.)
           docker build --platform linux/amd64 \
-            -f services/auth/Dockerfile \
-            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
-            services/auth
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.IMAGE_TAG }} \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
           
           echo "📤 Pushing to ECR..."
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
