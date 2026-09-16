@@ -52,8 +52,12 @@ jobs:
           IMAGE_TAG: ${{ steps.set-tag.outputs.tag }}
         run: |
           echo "🔨 Building Docker image..."
-          # Altere o contexto de build caso o Dockerfile não esteja na raiz
-          docker build --platform linux/amd64 -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          # -f indica onde está o Dockerfile
+          # O último argumento indica a pasta de contexto (onde estão go.mod, main.go, etc.)
+          docker build --platform linux/amd64 \
+            -f services/auth/Dockerfile \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            services/auth
           
           echo "📤 Pushing to ECR..."
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
