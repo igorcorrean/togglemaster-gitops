@@ -57,7 +57,6 @@ jobs:
           docker build --platform linux/amd64 \
             -f services/auth/Dockerfile \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
-            services/auth
           
           echo "📤 Pushing to ECR..."
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
@@ -95,7 +94,7 @@ jobs:
             --from-literal=DB_USER_AUTH="postgres" \
             --from-literal=DB_PASSWORD_AUTH="${{ secrets.RDS_PASSWORD }}" \
             --from-literal=DATABASE_URL_AUTH="postgres://postgres:${{ secrets.RDS_PASSWORD }}@${AUTH_HOST}:5432/auth?sslmode=disable" \
-            --from-literal=DB_URL_AUTH ="${{secrets.DB_URL_AUTH}}" \
+            --from-literal=DB_URL_AUTH="${{secrets.DB_URL_AUTH}}" \
             --from-literal=MASTER_KEY="${{ secrets.MASTER_KEY }}" \
             --dry-run=client -o yaml | kubectl apply -f -
 
