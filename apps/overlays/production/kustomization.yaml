@@ -1,7 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 metadata:
-  name: togglemaster-gitops
+  name: togglemaster
   namespace: flux-system
 
 # Injeta ConfigMap dinamicamente com os endpoints da AWS gerados pelo Terraform
