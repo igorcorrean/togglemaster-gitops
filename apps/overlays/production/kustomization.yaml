@@ -3,17 +3,6 @@ kind: Kustomization
 metadata:
   name: togglemaster-gitops
   namespace: flux-system
-spec:
-  interval: 5m                    # Reconcilia a cada 5 minutos
-  sourceRef:
-    kind: GitRepository
-    name: togglemaster-gitops        # Referência ao GitRepository acima
-  path: ./apps/overlays/production
-  prune: true                     # Remove recursos deletados do Git
-  wait: true                      # Aguarda recursos ficarem prontos
-  timeout: 2m
-  targetNamespace: togglemaster-prod # ⚠️ Namespace onde aplicar os recursos
-
 
 # Injeta ConfigMap dinamicamente com os endpoints da AWS gerados pelo Terraform
 configMapGenerator:
