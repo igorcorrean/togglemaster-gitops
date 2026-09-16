@@ -11,7 +11,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/igorcorrean/togglemaster-gitops.git
-    targetRevision: HEAD
+    targetRevision: main
     path: apps/overlays/production
   destination:
     server: https://kubernetes.default.svc
