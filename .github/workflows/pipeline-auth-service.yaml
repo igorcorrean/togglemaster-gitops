@@ -55,8 +55,9 @@ jobs:
           # -f indica onde está o Dockerfile
           # O último argumento indica a pasta de contexto (onde estão go.mod, main.go, etc.)
           docker build --platform linux/amd64 \
-            -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.IMAGE_TAG }} \
-            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+            -f services/auth/Dockerfile \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            services/auth
           
           echo "📤 Pushing to ECR..."
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
@@ -93,7 +94,7 @@ jobs:
             --namespace togglemaster \
             --from-literal=DB_USER_AUTH="postgres" \
             --from-literal=DB_PASSWORD_AUTH="${{ secrets.RDS_PASSWORD }}" \
-            --from-literal=DATABASE_URL_AUTH="postgres://postgres:${{ secrets.RDS_PASSWORD }}@${AUTH_HOST}:5432/auth?sslmode=disable" \
+            --from-literal=DB_URL_AUTH="postgres://postgres:${{ secrets.RDS_PASSWORD }}@${AUTH_HOST}:5432/auth?sslmode=disable" \
             --from-literal=MASTER_KEY="${{ secrets.MASTER_KEY }}" \
             --dry-run=client -o yaml | kubectl apply -f -
 
