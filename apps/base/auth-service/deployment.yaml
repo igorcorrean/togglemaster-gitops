@@ -57,6 +57,11 @@ spec:
             secretKeyRef:
               name: auth-service-secret
               key: DATABASE_URL_AUTH
+        - name: DB_URL_AUTH
+          valueFrom:
+            secretKeyRef:
+              name: auth-service-secret
+              key: DB_URL_AUTH
         - name: MASTER_KEY
           valueFrom:
             secretKeyRef:
