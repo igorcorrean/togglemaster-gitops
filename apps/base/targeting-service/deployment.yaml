@@ -21,11 +21,11 @@ spec:
         ports:
         - containerPort: 8003
         env:
-          - name: DATABASE_URL
+          - name: DATABASE_URL_TARGETING
             valueFrom:
               secretKeyRef:
                 name: targeting-service-secret
-                key: DATABASE_URL
+                key: DATABASE_URL_TARGETING
           - name: AUTH_SERVICE_URL
             valueFrom:
               secretKeyRef:
