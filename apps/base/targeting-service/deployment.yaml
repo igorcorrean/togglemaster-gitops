@@ -20,11 +20,6 @@ spec:
         image: "271384503138.dkr.ecr.us-east-1.amazonaws.com/targeting-service:latest"
         ports:
         - containerPort: 8003
-        envFrom:
-        - configMapRef:
-            name: targeting-service-config
-        - secretRef:
-            name: targeting-service-secret
         env:
           - name: DATABASE_URL
             valueFrom:
