@@ -7,4 +7,4 @@ resources:
   - flag-service
   - targeting-service
   - evaluation-service
-  # - analytics-service
+  - analytics-service

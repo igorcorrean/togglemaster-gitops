@@ -17,13 +17,10 @@ spec:
     spec:
       containers:
       - name: analytics-service
-        image: "271384503138.dkr.ecr.us-east-1.amazonaws.com/togglemaster/analytics-service:latest"
+        image: "271384503138.dkr.ecr.us-east-1.amazonaws.com/analytics-service:latest"
         envFrom:
         - configMapRef:
             name: analytics-service-config
-        # Descomente a linha abaixo apenas se estiver usando as chaves de Conta Pessoal
-        - secretRef:
-            name: analytics-service-secret
         resources:
           requests:
             cpu: "100m"
