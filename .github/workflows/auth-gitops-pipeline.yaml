@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'app/**'
+      - 'apps/base/auth-service/**'
       - 'Dockerfile'
       - 'go.mod'
       - 'go.sum'
