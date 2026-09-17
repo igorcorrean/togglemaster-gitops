@@ -24,8 +24,6 @@ spec:
         envFrom:
         - configMapRef:
             name: evaluation-service-config
-        - secretRef:
-            name: evaluation-service-secret
         resources:
           requests:
             cpu: "150m" # Um pouco mais de CPU por ser o "hot path" de alta performance
