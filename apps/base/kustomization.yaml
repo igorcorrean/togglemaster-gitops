@@ -6,5 +6,5 @@ resources:
   - auth-service
   - flag-service
   - targeting-service
-  # - evaluation-service
+  - evaluation-service
   # - analytics-service
