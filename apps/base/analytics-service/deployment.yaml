@@ -21,6 +21,9 @@ spec:
         envFrom:
         - configMapRef:
             name: analytics-service-config
+        # Descomente a linha abaixo apenas se estiver usando as chaves de Conta Pessoal
+        - secretRef:
+            name: togglemaster-config
         resources:
           requests:
             cpu: "100m"
