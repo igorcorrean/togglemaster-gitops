@@ -22,8 +22,6 @@ spec:
         - configMapRef:
             name: analytics-service-config
         # Descomente a linha abaixo apenas se estiver usando as chaves de Conta Pessoal
-        - secretRef:
-            name: analytics-service-config
         resources:
           requests:
             cpu: "100m"
