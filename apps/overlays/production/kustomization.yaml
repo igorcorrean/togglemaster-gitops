@@ -18,4 +18,4 @@ configMapGenerator:
 images:
 - name: auth-service
   newName: /auth-service
-  newTag: v1.0.0-ea4b5a404540552abba0b8a2f598bd5ffbc6acf6
+  newTag: v1.0.0-246c6f93a9dffb7fc0ee4c710b9274ea193d3b4d
