@@ -5,13 +5,17 @@ metadata:
   namespace: flux-system
 
 resources:
-  - ../../base
+- ../../base
   
 # Injeta ConfigMap dinamicamente com os endpoints da AWS gerados pelo Terraform
 configMapGenerator:
-  - name: togglemaster-config
-    literals:
-      - AWS_REGION=us-east-1
-      - REDIS_HOST=togglemaster-redis.gigmz6.0001.use1.cache.amazonaws.com:6379
-      - SQS_QUEUE_URL=https://sqs.us-east-1.amazonaws.com/271384503138/togglemaster-events
-      - DYNAMODB_TABLE=ToggleMasterAnalytics
+- literals:
+  - AWS_REGION=us-east-1
+  - REDIS_HOST=togglemaster-redis.gigmz6.0001.use1.cache.amazonaws.com:6379
+  - SQS_QUEUE_URL=https://sqs.us-east-1.amazonaws.com/271384503138/togglemaster-events
+  - DYNAMODB_TABLE=ToggleMasterAnalytics
+  name: togglemaster-config
+images:
+- name: auth-service
+  newName: /auth-service
+  newTag: v1.0.0-65327a128e2f01171b019000339ce7e41c6e94da
