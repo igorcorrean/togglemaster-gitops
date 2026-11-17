@@ -3,6 +3,9 @@ kind: Service
 metadata:
   name: flag-service
   namespace: togglemaster
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: /metrics
 spec:
   type: ClusterIP
   selector:
