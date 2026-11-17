@@ -9,3 +9,6 @@ resources:
   - grafana-config.yaml
   - grafana-deployment.yaml
   - grafana-service.yaml
+  - loki.yaml
+  - alloy.yaml
+  - otel-collector.yaml
