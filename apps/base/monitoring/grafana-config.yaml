@@ -14,6 +14,7 @@ data:
         isDefault: true
       - name: Loki
         type: loki
+        uid: loki
         access: proxy
         url: http://loki-service:3100
       - name: Tempo
@@ -76,6 +77,95 @@ data:
           "type": "timeseries",
           "gridPos": {"h": 9, "w": 24, "x": 0, "y": 18},
           "targets": [{"expr": "sum by (outcome) (rate(analytics_messages_total[5m]))", "legendFormat": "{{outcome}}", "refId": "A"}]
+        }
+      ]
+    }
+  togglemaster-logs.json: |
+    {
+      "id": null,
+      "uid": "togglemaster-logs",
+      "title": "ToggleMaster | Logs dos serviços",
+      "tags": ["togglemaster", "logs"],
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "10s",
+      "time": {"from": "now-1h", "to": "now"},
+      "templating": {
+        "list": [
+          {
+            "name": "service",
+            "label": "Serviço",
+            "type": "query",
+            "datasource": {"type": "loki", "uid": "loki"},
+            "query": "label_values(service)",
+            "definition": "label_values(service)",
+            "refresh": 1,
+            "sort": 1,
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {"selected": true, "text": "Todos", "value": "$__all"},
+            "options": []
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Volume de logs por serviço",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "datasource": {"type": "loki", "uid": "loki"},
+          "targets": [
+            {
+              "expr": "sum by (service) (count_over_time({service=~\"$service\"}[$__interval]))",
+              "legendFormat": "{{service}}",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Erros por serviço",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "datasource": {"type": "loki", "uid": "loki"},
+          "targets": [
+            {
+              "expr": "sum by (service) (count_over_time({service=~\"$service\"} |~ \"(?i)(error|exception|fatal)\" [$__interval]))",
+              "legendFormat": "{{service}}",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "Logs recentes",
+          "type": "logs",
+          "gridPos": {"h": 14, "w": 24, "x": 0, "y": 8},
+          "datasource": {"type": "loki", "uid": "loki"},
+          "options": {
+            "showTime": true,
+            "showLabels": true,
+            "showCommonLabels": false,
+            "wrapLogMessage": true,
+            "prettifyLogMessage": false,
+            "enableLogDetails": true,
+            "sortOrder": "Descending",
+            "dedupStrategy": "none"
+          },
+          "targets": [
+            {
+              "expr": "{service=~\"$service\"}",
+              "queryType": "range",
+              "direction": "backward",
+              "maxLines": 500,
+              "refId": "A"
+            }
+          ]
         }
       ]
     }

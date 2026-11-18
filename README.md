@@ -32,9 +32,12 @@ kubectl -n togglemaster port-forward svc/grafana-service 3000:3000
 ```
 
 Acesse `http://localhost:3000` e entre com `admin` / `admin`; o Grafana pedirá
-a troca da senha no primeiro acesso. No Explore, selecione Loki e use, por
-exemplo, `{service="evaluation-service"}` para consultar logs; selecione Tempo
-para consultar traces. Prometheus fica disponível internamente em
+a troca da senha no primeiro acesso. Na pasta **ToggleMaster**, abra a
+dashboard **ToggleMaster | Logs dos serviços** e selecione um serviço no filtro
+**Serviço** para ver o volume, as linhas com `error`, `exception` ou `fatal` e
+os logs recentes. No Explore, selecione Loki e use, por exemplo,
+`{service="evaluation-service"}` para consultar logs; selecione Tempo para
+consultar traces. Prometheus fica disponível internamente em
 `http://prometheus-service:9090`. Prometheus e Loki usam armazenamento
 efêmero; Loki e Tempo têm retenção de até sete dias. Os traces também ficam
 disponíveis no APM / Service Map do Datadog após configurar a API key.
