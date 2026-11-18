@@ -8,3 +8,4 @@ resources:
   - targeting-service
   - evaluation-service
   - analytics-service
+  - monitoring

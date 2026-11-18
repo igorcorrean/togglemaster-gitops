@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-provisioning
+  namespace: togglemaster
+data:
+  datasource.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus-service:9090
+        isDefault: true
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki-service:3100
+      - name: Tempo
+        type: tempo
+        access: proxy
+        url: http://tempo-service:3200
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: ToggleMaster
+        orgId: 1
+        folder: ToggleMaster
+        type: file
+        disableDeletion: true
+        options:
+          path: /var/lib/grafana/dashboards
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: togglemaster-dashboard
+  namespace: togglemaster
+data:
+  togglemaster-overview.json: |
+    {
+      "id": null,
+      "uid": "togglemaster-overview",
+      "title": "ToggleMaster | Services",
+      "tags": ["togglemaster"],
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "15s",
+      "time": {"from": "now-1h", "to": "now"},
+      "panels": [
+        {
+          "id": 1,
+          "title": "Requisições por segundo",
+          "type": "timeseries",
+          "gridPos": {"h": 9, "w": 12, "x": 0, "y": 0},
+          "targets": [{"expr": "sum by (service) (rate(http_requests_total[5m]))", "legendFormat": "{{service}}", "refId": "A"}]
+        },
+        {
+          "id": 2,
+          "title": "Latência média (segundos)",
+          "type": "timeseries",
+          "gridPos": {"h": 9, "w": 12, "x": 12, "y": 0},
+          "targets": [{"expr": "sum by (service) (rate(http_request_duration_seconds_sum[5m])) / sum by (service) (rate(http_request_duration_seconds_count[5m]))", "legendFormat": "{{service}}", "refId": "A"}]
+        },
+        {
+          "id": 3,
+          "title": "Respostas por status HTTP",
+          "type": "timeseries",
+          "gridPos": {"h": 9, "w": 24, "x": 0, "y": 9},
+          "targets": [{"expr": "sum by (service, status) (rate(http_requests_total[5m]))", "legendFormat": "{{service}} / {{status}}", "refId": "A"}]
+        },
+        {
+          "id": 4,
+          "title": "Mensagens processadas pelo analytics",
+          "type": "timeseries",
+          "gridPos": {"h": 9, "w": 24, "x": 0, "y": 18},
+          "targets": [{"expr": "sum by (outcome) (rate(analytics_messages_total[5m]))", "legendFormat": "{{outcome}}", "refId": "A"}]
+        }
+      ]
+    }

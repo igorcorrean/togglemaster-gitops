@@ -3,6 +3,9 @@ kind: Service
 metadata:
   name: auth-service
   namespace: togglemaster
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: /metrics
 spec:
   type: ClusterIP # Tipo exigido pelo enunciado do Tech Challenge
   selector:

@@ -3,11 +3,14 @@ kind: Service
 metadata:
   name: analytics-service
   namespace: togglemaster
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: /metrics
 spec:
   type: ClusterIP
   selector:
     app: analytics-service
   ports:
   - protocol: TCP
-    port: 8000
-    targetPort: 8000
+    port: 8005
+    targetPort: 8005

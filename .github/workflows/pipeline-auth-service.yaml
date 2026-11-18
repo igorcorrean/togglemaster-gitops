@@ -30,6 +30,13 @@ jobs:
     steps:
       - name: 📥 Checkout código
         uses: actions/checkout@v4
+
+      - name: 📥 Checkout auth-service source
+        uses: actions/checkout@v4
+        with:
+          repository: igorcorrean/auth-service
+          ref: main
+          path: auth-service-source
       
       - name: 🔑 Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -52,11 +59,10 @@ jobs:
           IMAGE_TAG: ${{ steps.set-tag.outputs.tag }}
         run: |
           echo "🔨 Building Docker image..."
-          # -f indica onde está o Dockerfile
-          # O último argumento indica a pasta de contexto (onde estão go.mod, main.go, etc.)
           docker build --platform linux/amd64 \
-            -f services/auth/Dockerfile \
-            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            -f auth-service-source/Dockerfile \
+            -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
+            auth-service-source/
           
           echo "📤 Pushing to ECR..."
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
@@ -111,6 +117,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          ref: main
       
       - name: 🔧 Setup Kustomize
         run: |

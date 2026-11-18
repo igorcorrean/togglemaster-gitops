@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - prometheus-config.yaml
+  - prometheus-rbac.yaml
+  - prometheus-deployment.yaml
+  - prometheus-service.yaml
+  - grafana-config.yaml
+  - grafana-deployment.yaml
+  - grafana-service.yaml
+  - loki.yaml
+  - alloy.yaml
+  - tempo.yaml
+  - otel-collector.yaml
