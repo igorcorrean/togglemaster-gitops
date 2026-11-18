@@ -11,4 +11,5 @@ resources:
   - grafana-service.yaml
   - loki.yaml
   - alloy.yaml
+  - tempo.yaml
   - otel-collector.yaml

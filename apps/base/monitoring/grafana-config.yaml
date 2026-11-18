@@ -16,6 +16,10 @@ data:
         type: loki
         access: proxy
         url: http://loki-service:3100
+      - name: Tempo
+        type: tempo
+        access: proxy
+        url: http://tempo-service:3200
   dashboards.yaml: |
     apiVersion: 1
     providers:

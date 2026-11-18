@@ -25,6 +25,10 @@ data:
         api:
           site: ${env:DD_SITE}
           key: ${env:DD_API_KEY}
+      otlp/tempo:
+        endpoint: tempo-service:4317
+        tls:
+          insecure: true
 
     service:
       extensions: [health_check]
@@ -32,7 +36,7 @@ data:
         traces:
           receivers: [otlp]
           processors: [batch]
-          exporters: [datadog]
+          exporters: [datadog, otlp/tempo]
 ---
 apiVersion: apps/v1
 kind: Deployment
