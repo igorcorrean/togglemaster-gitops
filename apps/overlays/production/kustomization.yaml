@@ -16,6 +16,9 @@ configMapGenerator:
   - DYNAMODB_TABLE=ToggleMasterAnalytics
   name: togglemaster-config
 images:
+- name: 271384503138.dkr.ecr.us-east-1.amazonaws.com/auth-service
+  newName: 271384503138.dkr.ecr.us-east-1.amazonaws.com/auth-service
+  newTag: 73fa313a044936d38e2bd05c2060c88202d96d6a
 - name: auth-service
   newName: /auth-service
   newTag: v1.0.0-3d1024f17e64fc83cabc59a432befb59c3af1e72
