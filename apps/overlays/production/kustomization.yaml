@@ -19,6 +19,9 @@ images:
 - name: 271384503138.dkr.ecr.us-east-1.amazonaws.com/auth-service
   newName: 271384503138.dkr.ecr.us-east-1.amazonaws.com/auth-service
   newTag: 6e1bf2f036719c3d49330e660fbd52542572432a
+- name: 271384503138.dkr.ecr.us-east-1.amazonaws.com/togglemaster/auth-service
+  newName: 271384503138.dkr.ecr.us-east-1.amazonaws.com/togglemaster/auth-service
+  newTag: latest
 - name: auth-service
   newName: /auth-service
   newTag: v1.0.0-5d649d78c7d2884d07c4005e13dff0b46ede5e5a
