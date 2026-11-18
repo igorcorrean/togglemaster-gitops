@@ -21,4 +21,4 @@ images:
   newTag: 73fa313a044936d38e2bd05c2060c88202d96d6a
 - name: auth-service
   newName: /auth-service
-  newTag: v1.0.0-64605036d440b6f7c152083c90a94803abe45b6e
+  newTag: v1.0.0-5d649d78c7d2884d07c4005e13dff0b46ede5e5a
