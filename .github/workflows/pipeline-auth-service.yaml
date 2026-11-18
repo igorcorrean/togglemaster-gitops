@@ -12,7 +12,7 @@ permissions:
 
 env:
   AWS_REGION: us-east-1
-  ECR_REPOSITORY: auth-service
+  ECR_REPOSITORY: togglemaster/auth-service
   EKS_CLUSTER_NAME: togglemaster-eks
   KUSTOMIZE_OVERLAY_PATH: apps/overlays/production
 
@@ -122,6 +122,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          ref: main
       
       - name: 🔧 Setup Kustomize
         run: |
@@ -154,7 +155,7 @@ jobs:
             echo "⚠️ No changes to commit"
           else
             git commit -m "chore(gitops): update auth-service image to $IMAGE_TAG"
-            git push origin main
+            git push origin HEAD:main
           fi
 
   # ============================================
