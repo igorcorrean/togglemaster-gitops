@@ -63,9 +63,14 @@ jobs:
             -f auth-service-source/Dockerfile \
             -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
             auth-service-source/
+
+          docker tag \
+            "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
+            "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
           
           echo "📤 Pushing to ECR..."
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
 
   # ============================================
   # JOB 2: Sincronizar Secret no EKS
@@ -117,7 +122,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          ref: main
       
       - name: 🔧 Setup Kustomize
         run: |
@@ -127,13 +131,12 @@ jobs:
       - name: 📝 Update image tag in kustomization
         env:
           ECR_REGISTRY: ${{ needs.build-and-push.outputs.ecr-registry }}
-          IMAGE_TAG: ${{ needs.build-and-push.outputs.image-tag }}
         run: |
           cd ${{ env.KUSTOMIZE_OVERLAY_PATH }}
           
           # Atualiza a tag da imagem no kustomization.yaml
           kustomize edit set image \
-            $ECR_REGISTRY/$ECR_REPOSITORY=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+            "$ECR_REGISTRY/$ECR_REPOSITORY=$ECR_REGISTRY/$ECR_REPOSITORY:latest"
           
           echo "✅ Kustomization updated:"
           cat kustomization.yaml
