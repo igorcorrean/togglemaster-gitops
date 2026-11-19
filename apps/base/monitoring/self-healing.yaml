@@ -1,0 +1,287 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: self-healing-sa
+  namespace: togglemaster
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: self-healing-role
+  namespace: togglemaster
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "patch", "list"]
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: self-healing-rolebinding
+  namespace: togglemaster
+subjects:
+  - kind: ServiceAccount
+    name: self-healing-sa
+    namespace: togglemaster
+roleRef:
+  kind: Role
+  name: self-healing-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: self-healing-app
+  namespace: togglemaster
+data:
+  app.py: |
+    import os
+    import json
+    import logging
+    import datetime
+    import urllib.request
+    from http.server import HTTPServer, BaseHTTPRequestHandler
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+    log = logging.getLogger("self-healing")
+
+    DISCORD_WEBHOOK = os.getenv("DISCORD_WEBHOOK_URL", "")
+    SLACK_WEBHOOK = os.getenv("SLACK_WEBHOOK_URL", "")
+
+    # Cache de reinicializações recentes para evitar restart loops (cooldown de 2 min)
+    restarted_recently = {}
+
+    def send_chatops_notification(title, description, color=16711680):
+        """Envia mensagem formatada para Discord ou Slack caso configurado"""
+        payload = {
+            "embeds": [{
+                "title": title,
+                "description": description,
+                "color": color,
+                "timestamp": datetime.datetime.utcnow().isoformat()
+            }]
+        }
+        target_url = DISCORD_WEBHOOK or SLACK_WEBHOOK
+        if not target_url:
+            log.info("ChatOps not configured (DISCORD_WEBHOOK_URL / SLACK_WEBHOOK_URL empty). Skipping external dispatch.")
+            return
+
+        try:
+            req = urllib.request.Request(
+                target_url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json", "User-Agent": "ToggleMaster-SelfHealing/1.0"}
+            )
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                log.info(f"ChatOps notification delivered. HTTP {resp.status}")
+        except Exception as e:
+            log.error(f"Failed to deliver ChatOps notification: {e}")
+
+    def execute_k8s_restart(deployment_name, namespace="togglemaster"):
+        """Executa patch seguro no Deployment via Kubernetes API interna"""
+        token_path = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+        if not os.path.exists(token_path):
+            log.warning("Not running inside Kubernetes cluster. Simulation mode.")
+            return True
+
+        with open(token_path, "r") as f:
+            token = f.read().strip()
+
+        api_url = f"https://kubernetes.default.svc/apis/apps/v1/namespaces/{namespace}/deployments/{deployment_name}"
+        now_iso = datetime.datetime.utcnow().isoformat() + "Z"
+        patch_body = {
+            "spec": {
+                "template": {
+                    "metadata": {
+                        "annotations": {
+                            "kubectl.kubernetes.io/restartedAt": now_iso,
+                            "self-healing.togglemaster/triggeredBy": "PrometheusAlertmanager"
+                        }
+                    }
+                }
+            }
+        }
+
+        # Cria contexto SSL seguro com o certificado injetado pelo k8s
+        import ssl
+        ssl_ctx = ssl.create_default_context(cafile="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt")
+
+        req = urllib.request.Request(
+            api_url,
+            data=json.dumps(patch_body).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/strategic-merge-patch+json",
+                "Accept": "application/json"
+            },
+            method="PATCH"
+        )
+
+        try:
+            with urllib.request.urlopen(req, context=ssl_ctx, timeout=10) as resp:
+                log.info(f"K8s API responded with {resp.status} for rollout restart of {deployment_name}")
+                return resp.status in (200, 201)
+        except Exception as e:
+            log.error(f"Failed to restart deployment {deployment_name} via K8s API: {e}")
+            return False
+
+    class AlertHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path == "/health":
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "ok", "service": "self-healing-agent"}).encode())
+                return
+            self.send_response(404)
+            self.end_headers()
+
+        def do_POST(self):
+            if self.path not in ("/alerts", "/heal"):
+                self.send_response(404)
+                self.end_headers()
+                return
+
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length)
+            try:
+                data = json.loads(body.decode("utf-8"))
+            except Exception:
+                data = {}
+
+            log.info(f"Received webhook payload: {json.dumps(data)[:300]}")
+
+            alerts = data.get("alerts", [])
+            for alert in alerts:
+                status = alert.get("status", "firing")
+                labels = alert.get("labels", {})
+                annotations = alert.get("annotations", {})
+                service = labels.get("service", labels.get("app", "unknown"))
+                alertname = labels.get("alertname", "UnknownAlert")
+                severity = labels.get("severity", "info")
+
+                log.info(f"Processing alert: {alertname} | Service: {service} | Status: {status} | Severity: {severity}")
+
+                if status == "firing" and severity == "critical":
+                    now = datetime.datetime.utcnow().timestamp()
+                    last_restart = restarted_recently.get(service, 0)
+
+                    # Cooldown de 120s para evitar loops de reinicialização contínua
+                    if now - last_restart > 120:
+                        restarted_recently[service] = now
+                        log.info(f"Triggering active self-healing remediation for {service}...")
+
+                        # 1. Notifica ChatOps sobre a detecção do incidente
+                        send_chatops_notification(
+                            title=f"🚨 [INCIDENTE] {alertname} - {service}",
+                            description=f"**Descrição:** {annotations.get('description', 'Sem descrição')}\n**Ação:** Disparando reinício automático via self-healing.",
+                            color=15158332
+                        )
+
+                        # 2. Executa a remediação no cluster
+                        success = execute_k8s_restart(service)
+                        if success:
+                            send_chatops_notification(
+                                title=f"⚡ [SELF-HEALING] Remediação Executada",
+                                description=f"Deployment `{service}` foi reiniciado com sucesso para restabelecer a disponibilidade.",
+                                color=3066993
+                            )
+                        else:
+                            send_chatops_notification(
+                                title=f"⚠️ [SELF-HEALING] Falha na Remediação",
+                                description=f"Não foi possível reiniciar o deployment `{service}`. Intervenção manual requerida.",
+                                color=15105570
+                            )
+                    else:
+                        log.warning(f"Deployment {service} restarted within cooldown window. Skipping action.")
+
+                elif status == "resolved":
+                    send_chatops_notification(
+                        title=f"✅ [RESOLVIDO] {alertname} - {service}",
+                        description=f"O serviço `{service}` retornou ao estado saudável.",
+                        color=3066993
+                    )
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"status": "received", "remediated": True}).encode())
+
+    def run(server_class=HTTPServer, handler_class=AlertHandler, port=5000):
+        server_address = ("0.0.0.0", port)
+        httpd = server_class(server_address, handler_class)
+        log.info(f"Self-Healing Agent running on port {port}...")
+        httpd.serve_forever()
+
+    if __name__ == "__main__":
+        run()
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: self-healing-agent
+  namespace: togglemaster
+  labels:
+    app: self-healing-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: self-healing-agent
+  template:
+    metadata:
+      labels:
+        app: self-healing-agent
+    spec:
+      serviceAccountName: self-healing-sa
+      containers:
+        - name: agent
+          image: python:3.11-alpine
+          command: ["python", "/app/app.py"]
+          ports:
+            - containerPort: 5000
+              name: http
+          env:
+            - name: DISCORD_WEBHOOK_URL
+              value: "https://discord.com/api/webhooks/1572776679217168547/REB2NoMExG3lVYrwLwx5jKGZIJDSb8QfZKaP2s23upvjtKmXOle90Pl0_y2-PmhQVrL8"
+            - name: SLACK_WEBHOOK_URL
+              value: ""
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 150m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: code
+              mountPath: /app
+      volumes:
+        - name: code
+          configMap:
+            name: self-healing-app
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: self-healing-service
+  namespace: togglemaster
+  labels:
+    app: self-healing-agent
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 5000
+      targetPort: 5000
+  selector:
+    app: self-healing-agent

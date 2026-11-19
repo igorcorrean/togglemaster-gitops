@@ -9,6 +9,15 @@ data:
       scrape_interval: 15s
       evaluation_interval: 15s
 
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+                - alertmanager-service:9093
+
+    rule_files:
+      - /etc/prometheus/alerting_rules.yml
+
     scrape_configs:
       - job_name: prometheus
         static_configs:
@@ -31,3 +40,37 @@ data:
             target_label: namespace
           - source_labels: [__meta_kubernetes_service_name]
             target_label: service
+
+  alerting_rules.yml: |
+    groups:
+      - name: togglemaster-alerts
+        rules:
+          - alert: ServiceDown
+            expr: up{job="togglemaster-services"} == 0
+            for: 30s
+            labels:
+              severity: critical
+            annotations:
+              summary: "Serviço {{ $labels.service }} está fora do ar"
+              description: "O endpoint do pod {{ $labels.instance }} do serviço {{ $labels.service }} não está respondendo ao scrape do Prometheus por mais de 30 segundos."
+              runbook: "http://localhost:3000"
+
+          - alert: HighHttpErrorRate5xx
+            expr: sum(rate(http_requests_total{status=~"5.."}[1m])) by (service) / sum(rate(http_requests_total[1m])) by (service) > 0.05
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Taxa de erro 5xx elevada em {{ $labels.service }}"
+              description: "O serviço {{ $labels.service }} está com taxa de erro HTTP 5xx acima de 5% no último minuto (valor atual: {{ $value | humanizePercentage }})."
+              runbook: "http://localhost:3000"
+
+          - alert: HighRequestLatency
+            expr: (sum(rate(http_request_duration_seconds_sum[2m])) by (service) / sum(rate(http_request_duration_seconds_count[2m])) by (service)) > 1.5
+            for: 1m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Latência média elevada em {{ $labels.service }}"
+              description: "A latência média das requisições para {{ $labels.service }} ultrapassou 1.5s nos últimos 2 minutos (latência atual: {{ $value | humanizeDuration }})."
+              runbook: "http://localhost:3000"
