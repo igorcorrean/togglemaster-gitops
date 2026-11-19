@@ -246,7 +246,7 @@ spec:
               name: http
           env:
             - name: DISCORD_WEBHOOK_URL
-              value: ""
+              value: "https://discord.com/api/webhooks/1572776679217168547/REB2NoMExG3lVYrwLwx5jKGZIJDSb8QfZKaP2s23upvjtKmXOle90Pl0_y2-PmhQVrL8"
             - name: SLACK_WEBHOOK_URL
               value: ""
           resources:
